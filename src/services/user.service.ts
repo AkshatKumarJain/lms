@@ -1,84 +1,177 @@
-import { createUserDTO } from "../interfaces/user.interface";
+import { createUserDTO, IUser } from "../interfaces/user.interface";
 import userModel from "../models/user.model";
 import transporter from "../config/nodemailer.config";
+import { issueTokens, revokeAll, rotateRefreshToken } from "redis-jwt-auth";
 
-class UserService{
-    async createUser(data: createUserDTO){
-        const {username, email, Password, confirmPassword} = data;
-        if(!username || !email || !Password || !confirmPassword)
-        {
+class UserService {
+
+    async getAllUsers() {
+        const allUsers = await userModel.find().select("-Password");
+        return allUsers;
+    }
+
+    async getUserByEmail(data: string) {
+        if (!data || data === undefined) {
+            throw new Error("Email is required");
+        }
+
+        const getUser = await userModel.findOne({ email: data }).select("-Password");
+        return getUser;
+    }
+
+    async createUser(data: createUserDTO) {
+        const { username, email, Password, confirmPassword } = data;
+        if (!username || !email || !Password || !confirmPassword) {
             throw new Error("All fields are required!")
         }
 
         // check if the password lenght is of atleast 6 characters.
-        if(Password.length < 6)
-        {
+        if (Password.length < 6) {
             throw new Error("Password length must be of atleast 6 characters.")
         }
 
         // check if the length of password exceed 15 characters.
-        if(Password.length > 15)
-        {
+        if (Password.length > 15) {
             throw new Error("Password length cannot exceed 15 characters.")
-        }   
-        
+        }
+
         // check if user already exists or not
-        const findUser = await userModel.findOne({email: email});
-        if(findUser)
-        {
+        const findUser = await userModel.findOne({ email: email });
+        if (findUser) {
             throw new Error("User Email already exists.");
         }
 
         // password and confirmPassword must be same
-        if(Password!==confirmPassword)
-        {
+        if (Password !== confirmPassword) {
             throw new Error("Password and confirm password must be same!")
         }
 
         const createdUser = await userModel.create({
-            username, 
+            username,
             email,
             Password
         });
-        if(!createdUser)
-        {
+        if (!createdUser) {
             throw new Error("Cannot create User")
         }
         await createdUser.save();
-
-        // send email to registered email
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: email,
-            subject: `Welcome ${username} to stayFinder.`,
-            text: `Welcome to stayFinder. Your account has been created with email id: ${email}.`
-        }
-
-        const mail = await transporter.sendMail(mailOptions);
-        if(!mail)
-        {
-            console.log("couldn't send mail");
-        }
 
         this.sendMail(email, username);
 
         return createdUser;
     }
 
-    async sendMail(email: string, username: string){
+    private async sendMail(email: string, username: string) {
         // send email to registered email
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
             to: email,
-            subject: `Welcome ${username} to stayFinder.`,
-            text: `Welcome to stayFinder. Your account has been created with email id: ${email}.`
+            subject: `Welcome ${username} to lms.`,
+            text: `Welcome to lms. Your account has been created with email id: ${email}.`
         }
 
         const mail = await transporter.sendMail(mailOptions);
-        if(!mail)
-        {
+        if (!mail) {
             console.log("couldn't send mail");
         }
+    }
+
+    async deleteUser(data: string): Promise<any> {
+        const deletedUser = await userModel.findOneAndDelete({ email: data });
+        return deletedUser;
+    }
+
+    async loginUser(email: string, password: string) {
+        const findUser = await userModel.findOne({ email: email });
+        if (!findUser) {
+            const err:any = new Error("User with this email doesn't exist.");
+            err.statusCode = 404;
+            throw err;
+
+        }
+        const checkPassword = await findUser.comparePassword(password);
+        if (!checkPassword) {
+            throw new Error("email or password is incorrect.");
+        }
+        const { accessToken, refreshToken } = await issueTokens({ userId: findUser._id.toString() });
+        if (!accessToken || !refreshToken) {
+            throw new Error("couldn't get tokens")
+        }
+        const obj = { accessToken, refreshToken };
+        return obj;
+    }
+
+    async logoutUser(data: string){
+        const isrevoked = await revokeAll(data.toString());
+        return isrevoked;
+    }
+
+    async refreshUser(refreshToken: string){
+        const newRefreshToken = await rotateRefreshToken(refreshToken);
+        if(!newRefreshToken)
+        {
+            throw new Error("couldn't create new refresh token!");
+        }
+        return newRefreshToken;
+    }
+
+    async sendVerifyOTP(userId: any){
+        const findUser = await userModel.findById(userId);
+        console.log(findUser);
+        if(!findUser)
+        {
+            throw new Error("User doesn't exists.")
+        }
+        if(findUser.isAccountVerified===true)
+        {
+            throw new Error("Account is already verified");
+        }
+        const otp: string = String(Math.floor(100000 + Math.random() * 900000));
+        findUser.verifyOTP = otp;
+        findUser.verifyOTPExpiresAt = Date.now() + 300 * 1000;
+        console.log(otp);
+        await findUser.save();
+
+        console.log(findUser);
+
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: findUser.email,
+            subject: "Account verification otp",
+            text: `Your otp is ${otp}. Verify your account using this otp. It will expire in 3 minutes.` 
+        }
+
+        const isOTP = await transporter.sendMail(mailOptions);
+        console.log(isOTP);
+        if(!isOTP)
+        {
+            throw new Error("could not send otp");
+        }
+        return otp;
+    }
+
+    async verifyEmail(userId: any, otp: string){
+        const findUser = await userModel.findById(userId);
+        if(!findUser)
+        {
+            throw new Error("User does not exists");
+        }
+
+        if(findUser.verifyOTP==="" || findUser.verifyOTP!==otp)
+        {
+            throw new Error("Invalid or empty otp");
+        }
+
+        if(findUser.verifyOTPExpiresAt < Date.now())
+        {
+            throw new Error("otp has been expired")
+        }
+        findUser.isAccountVerified = true;
+        findUser.verifyOTP = "";
+        findUser.verifyOTPExpiresAt = 0;
+        await findUser.save();
+
+        return findUser.isAccountVerified;
     }
 }
 

@@ -1,10 +1,46 @@
 import express from "express";
 import { Request, Response } from "express";
-import userModel from "../models/user.model";
+// import userModel from "../models/user.model";
 import { createUserDTO, IUser } from "../interfaces/user.interface";
 import userService from "../services/user.service";
 
 class UserController{
+    async getAllUsers(req: Request, res: Response): Promise<Response>{
+        try {
+            const allUser = await userService.getAllUsers();
+            return res.status(200).json({
+                data: allUser,
+                message: "Data fetched successfully",
+            })
+        } catch (error) {
+            return res.status(500).json({
+                message: "Error",
+                error: error as Error
+            })
+        }
+    }
+
+    async getUserByEmail(req: Request, res: Response): Promise<Response> {
+        const {email} = req.body;
+        if(!email)
+        {
+            return res.status(400).json({
+                message: "Email is required"
+            })
+        }
+        try {
+            const getUser = await userService.getUserByEmail(email);
+            return res.status(200).json({
+                data: getUser,
+                message: "User fetched successfully"
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            })
+        }
+    }
+
     async createUser(req: Request, res: Response): Promise<Response>{
         try {
             const payload: createUserDTO = req.body;
@@ -16,6 +52,161 @@ class UserController{
         } catch (error) {
             return res.status(500).json({
                 message: "Error",
+                error: error as Error
+            })
+        }
+    }
+
+    async deleteUser(req: Request, res: Response): Promise<Response>{
+        const {email} = req.body;
+        if(!email)
+        {
+            return res.status(400).json({
+                message: "email is required"
+            })
+        }
+        try {
+        const deletedUser = await userService.deleteUser(email);
+        if(!deletedUser)
+        {
+            return res.status(400).json({
+                message: "No user found with this email"
+            })
+        }
+        return res.status(201).json({
+            data: deletedUser,
+            message: "User deleted successfully"
+        })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            })
+        }
+    }
+
+    async loginUser(req: Request, res: Response): Promise<Response>{
+        const {email, password} = req.body;
+        try {
+            const token = await userService.loginUser(email, password);
+            console.log("token ", token );
+            if(!token)
+            {
+                return res.status(404).json({
+                    message: "could"
+                })
+            }
+            return res.status(200).json({
+            token,
+            message: "Success"
+        })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            });
+        }
+    }
+
+    async logoutUser(req: Request, res: Response): Promise<Response>{
+        const {userId} = req.body;
+        if(!userId)
+        {
+            return res.status(404).json({
+                message: "couldn't fetch data"
+            })
+        }
+        try {
+            const isLogout = await userService.logoutUser(userId);
+            if(!isLogout)
+            {
+                return res.status(400).json({
+                    message: "something went wrong"
+                })
+            }
+            return res.status(200).json({
+                data: userId,
+                message: "User logout successful"
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            })
+        }
+    }
+
+    async rotateRefreshToken(req: Request, res: Response): Promise<Response>{
+        const {refreshToken} = req.body;
+        if(!refreshToken)
+        {
+            return res.status(404).json({
+                message: "refresh tokens are empty"
+            })
+        }
+        try {
+            const isRotate = await userService.refreshUser(refreshToken);
+            if(!isRotate)
+            {
+                return res.status(400).json({
+                    message: "Something went wrong"
+                })
+            }
+            return res.status(200).json({
+                message: "user refreshed successfully"
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            })
+        }
+    }
+
+    async sendVerifyOTP(req: Request, res: Response): Promise<Response>{
+        const {userId} = req.body;
+        if(!userId)
+        {
+            return res.status(400).json({
+                message: "UserId is required"
+            })
+        }
+        try {
+            const otp = await userService.sendVerifyOTP(userId);
+            if(!otp)
+            {
+                return res.status(300).json({
+                    message: "could not send otp."
+                })
+            }
+            return res.status(200).json({
+                otp,
+                message: "Otp sent successfully."
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            })
+        }
+    }
+
+    async verifyEmail(req: Request, res: Response): Promise<Response>{
+        const { userId, otp } = req.body;
+        if(!userId)
+        {
+            return res.status(400).json({
+                message: "User id is important"
+            })
+        }
+        try {
+            const isEmailVerified = await userService.verifyEmail(userId, otp);
+            if(!isEmailVerified)
+            {
+                return res.status(400).json({
+                    message: "could not verify email"
+                })
+            }
+            return res.status(200).json({
+                message: "Email has been verified"
+            })
+        } catch (error) {
+            return res.status(500).json({
                 error: error as Error
             })
         }

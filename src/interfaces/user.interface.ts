@@ -30,7 +30,8 @@ export interface createUserDTO{
     username: string;
     email: string;
     Password: string;
-    confirmPassword: string
+    confirmPassword: string,
+    role?: string
 }
 
 export type UserDocument = HydratedDocument<IUser>;
