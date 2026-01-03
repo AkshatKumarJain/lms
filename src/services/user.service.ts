@@ -2,6 +2,8 @@ import { createUserDTO, IUser } from "../interfaces/user.interface";
 import userModel from "../models/user.model";
 import transporter from "../config/nodemailer.config";
 import { issueTokens, revokeAll, rotateRefreshToken } from "redis-jwt-auth";
+import crypto from "crypto"
+import { text } from "stream/consumers";
 
 class UserService {
 
@@ -138,7 +140,7 @@ class UserService {
             from: process.env.SENDER_EMAIL,
             to: findUser.email,
             subject: "Account verification otp",
-            text: `Your otp is ${otp}. Verify your account using this otp. It will expire in 3 minutes.` 
+            text: `Your otp is ${otp}. Verify your account using this otp. It will expire in 5 minutes.` 
         }
 
         const isOTP = await transporter.sendMail(mailOptions);
@@ -172,6 +174,73 @@ class UserService {
         await findUser.save();
 
         return findUser.isAccountVerified;
+    }
+
+    async forgotPassword(email: string){
+        const findUser = await userModel.findOne({email: email});
+
+        if(!findUser)
+        {
+            throw new Error("If this email exists, the link has been sent");
+        }
+
+        const rawToken = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+        findUser.resetOTP = tokenHash;
+        findUser.resetOTPExpiresAt = Date.now() + 300 * 1000;
+
+        await findUser.save();
+
+        const resetUrl = `http://localhost:8000/api/v1/reset-password?token=${rawToken}`;
+
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: findUser.email,
+            subject: "Reset password email",
+            text: `click the link below to reset your password.
+            <p><a href="${resetUrl}">${resetUrl}</a></p>
+            ` 
+        }
+
+        console.log(mailOptions);
+
+        const sendEmail = await transporter.sendMail(mailOptions);
+
+        if(!sendEmail)
+        {
+            throw new Error("could not send email");
+        }
+
+        return sendEmail;
+
+    }
+
+    async resetPassword(token: string, password: string){
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+        const findUser = await userModel.findOne({
+            resetOTP: tokenHash,
+            resetOTPExpiresAt: {$gt: Number(new Date())}
+        })
+
+        if(!findUser)
+        {
+            throw new Error("Invalid or expired token")
+        }
+
+        const oldPassword: string = findUser.Password;
+
+        findUser.Password = password;
+        await findUser.save();
+
+        findUser.resetOTP = "";
+        findUser.resetOTPExpiresAt = 0;
+
+        this.logoutUser(findUser._id.toString());
+
+        return (oldPassword!==password);
+
     }
 }
 

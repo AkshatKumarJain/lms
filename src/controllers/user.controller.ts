@@ -211,6 +211,54 @@ class UserController{
             })
         }
     }
+
+    async forgotPassword(req: Request, res: Response): Promise<Response>{
+        const {email} = req.body;
+        if(!email)
+        {
+            return res.status(400).json({
+                message: "Email is required"
+            })
+        }
+
+        try {
+            const isEmailSent = await userService.forgotPassword(email);
+            if(!isEmailSent)
+            {
+                return res.status(400).json({
+                    message: "could not send email"
+                })
+            }
+
+            return res.status(200).json({
+                message: "If this email exists, email will be sent."
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            })
+        }
+    }
+
+    async resetPassword(req: Request, res: Response): Promise<Response>{
+        const {token, password} = req.body;
+        try {
+            const newPassword = await userService.resetPassword(token, password);
+            if(!newPassword)
+            {
+                return res.status(400).json({
+                    message: "New password cannot be same as old password"
+                })
+            }
+            return res.status(201).json({
+                message: "Password has been changed successfully"
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: error as Error
+            })
+        }
+    }
 }
 
 export = new UserController();
