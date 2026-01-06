@@ -2,16 +2,17 @@ import mongoose from "mongoose"
 import { HydratedDocument } from "mongoose";
 
 export interface IUser{
+    _id: mongoose.Types.ObjectId; 
     username: string;
     email: string;
     Password: string;
-    role: string;
+    role: "student" | "teacher" | "admin";
     isAccountVerified: boolean;
     verifyOTP: string;
     verifyOTPExpiresAt: number;
     resetOTP: string;
     resetOTPExpiresAt: number;
-    is2FAEnabled: Boolean;
+    is2FAEnabled: boolean;
     comparePassword(Password: string): Promise<boolean>;
 }
 
@@ -31,7 +32,7 @@ export interface createUserDTO{
     email: string;
     Password: string;
     confirmPassword: string,
-    role?: string
+    role?: "student" | "teacher" | "admin"
 }
 
 export type UserDocument = HydratedDocument<IUser>;

@@ -1,9 +1,11 @@
 import { createUserDTO, IUser } from "../interfaces/user.interface";
-import userModel from "../models/user.model";
+import {userModel} from "../models/user.model";
 import transporter from "../config/nodemailer.config";
 import { issueTokens, revokeAll, rotateRefreshToken } from "redis-jwt-auth";
 import crypto from "crypto"
-import { text } from "stream/consumers";
+import { OAuth2Client } from "google-auth-library";
+import Student from "../models/student.model";
+import Teacher from "../models/teacher.model";
 
 class UserService {
 
@@ -22,7 +24,7 @@ class UserService {
     }
 
     async createUser(data: createUserDTO) {
-        const { username, email, Password, confirmPassword } = data;
+        const { username, email, Password, confirmPassword, role } = data;
         if (!username || !email || !Password || !confirmPassword) {
             throw new Error("All fields are required!")
         }
@@ -49,14 +51,35 @@ class UserService {
         }
 
         const createdUser = await userModel.create({
-            username,
-            email,
-            Password
-        });
+            username: data.username,
+            email: data.email,
+            Password: data.Password,
+            role: data.role ? data.role: undefined
+        } as IUser);
         if (!createdUser) {
             throw new Error("Cannot create User")
         }
         await createdUser.save();
+
+        if(createdUser.role==='student')
+        {
+            const createdStudentProfile = await Student.create({userId: createdUser._id})
+            if(!createdStudentProfile)
+            {
+                throw new Error("Could not create student profile.")
+            }
+            console.log("student profile created");
+        }
+
+        if(createdUser.role==='teacher')
+        {
+            const createdTeacherProfile = await Teacher.create({userId: createdUser._id})
+            if(!createdTeacherProfile)
+            {
+                throw new Error("Could not create teacher profile.")
+            }
+            console.log("teacher profile created");
+        }
 
         this.sendMail(email, username);
 
@@ -184,6 +207,11 @@ class UserService {
             throw new Error("If this email exists, the link has been sent");
         }
 
+        if(findUser.isAccountVerified===false)
+        {
+            throw new Error("You need to verify your account first.");
+        }
+
         const rawToken = crypto.randomBytes(32).toString('hex');
         const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
@@ -240,8 +268,24 @@ class UserService {
         this.logoutUser(findUser._id.toString());
 
         return (oldPassword!==password);
-
     }
+
+    // async getGoogleClient(){
+    //     const clientId = process.env.GOOGLE_CLIENT_ID;
+    //     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    //     const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+
+    //     if(!clientId || !clientSecret)
+    //     {
+    //         throw new Error("Both clientId and client Secret are required");
+    //     }
+
+    //     return new OAuth2Client(
+    //         clientId,
+    //         clientSecret,
+    //         redirectUri
+    // )
+    // }
 }
 
 export = new UserService();

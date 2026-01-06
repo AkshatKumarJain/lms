@@ -1,6 +1,6 @@
 import { IUser, UserDocument } from "../interfaces/user.interface";
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
+import mongoose, {Schema, Model} from "mongoose";
 
 const userSchema = new mongoose.Schema<IUser>(
     {
@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema<IUser>(
         },
         role: {
             type: String,
-            enum: ["student", "teacher"],
+            enum: ["student", "teacher", "admin"],
             default: "student"
         },
         isAccountVerified: {
@@ -69,4 +69,7 @@ userSchema.methods.comparePassword = async function (this: UserDocument,
     return bcrypt.compare(Password, this.Password);
 }
 
-export default mongoose.model<IUser>("User", userSchema);
+
+export const userModel: Model<IUser> =
+  mongoose.models.User ||
+  mongoose.model<IUser>("User", userSchema);
