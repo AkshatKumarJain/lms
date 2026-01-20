@@ -51,7 +51,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                message: "Error",
+                message: "Error in creating user",
                 error: error as Error
             })
         }
@@ -241,15 +241,20 @@ class UserController{
     }
 
     async resetPassword(req: Request, res: Response): Promise<Response>{
-        const {token, password} = req.body;
-        try {
-            const newPassword = await userService.resetPassword(token, password);
-            if(!newPassword)
+        const {token} = req.params;
+        const {newPassword} = req.body;
+        if (!token) {
+        return res.status(400).json({ message: "Reset token is required" });
+        }
+        if(!newPassword)
             {
                 return res.status(400).json({
-                    message: "New password cannot be same as old password"
+                    message: "New password is required"
                 })
             }
+        try {
+            const result = await userService.resetPassword(token, newPassword);
+            
             return res.status(201).json({
                 message: "Password has been changed successfully"
             })

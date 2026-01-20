@@ -8,7 +8,6 @@ import Student from "../models/student.model";
 import Teacher from "../models/teacher.model";
 
 class UserService {
-
     async getAllUsers() {
         const allUsers = await userModel.find().select("-Password");
         return allUsers;
@@ -220,14 +219,14 @@ class UserService {
 
         await findUser.save();
 
-        const resetUrl = `http://localhost:8000/api/v1/reset-password?token=${rawToken}`;
+        const resetUrl = `http://localhost:5173/reset-password/${rawToken}`;
 
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
             to: findUser.email,
             subject: "Reset password email",
             text: `click the link below to reset your password.
-            <p><a href="${resetUrl}">${resetUrl}</a></p>
+            <a href="${resetUrl}">${resetUrl}</a>
             ` 
         }
 
@@ -244,7 +243,7 @@ class UserService {
 
     }
 
-    async resetPassword(token: string, password: string){
+    async resetPassword(token: string, newPassword: string){
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
         const findUser = await userModel.findOne({
@@ -259,15 +258,17 @@ class UserService {
 
         const oldPassword: string = findUser.Password;
 
-        findUser.Password = password;
+        findUser.Password = newPassword;
         await findUser.save();
 
         findUser.resetOTP = "";
         findUser.resetOTPExpiresAt = 0;
 
-        this.logoutUser(findUser._id.toString());
+         await this.logoutUser(findUser._id.toString());
 
-        return (oldPassword!==password);
+        return {
+            message: "Password reset successful. Please login again.",
+        };
     }
 
     // async getGoogleClient(){
