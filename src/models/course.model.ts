@@ -27,9 +27,12 @@ const courseSchema = new mongoose.Schema<ICourse>({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Teacher",
         required: true
+    },
+    isPublished: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 
-export const Course: Model<ICourse> =
-  mongoose.models.Course ||
-  mongoose.model<ICourse>("Course", courseSchema);
+const courseModel = mongoose.model<ICourse>("Course", courseSchema);
+export default courseModel;

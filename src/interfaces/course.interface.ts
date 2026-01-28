@@ -6,7 +6,8 @@ export interface ICourse{
     thumbnail: string,
     totalEnrolledStudends?: Number,
     enrolledStudents?: Array<mongoose.Types.ObjectId>,
-    author: mongoose.Types.ObjectId
+    author: mongoose.Types.ObjectId,
+    isPublished: boolean
 }
 
 export interface ISection{
@@ -15,6 +16,8 @@ export interface ISection{
     order: number
 }
 
-
-
-
+export interface ILesson{
+    title?: string,
+    section: mongoose.Types.ObjectId,
+    order: number
+}

@@ -15,7 +15,7 @@ class UserController{
         } catch (error) {
             return res.status(500).json({
                 message: "Error",
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -36,7 +36,34 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
+            })
+        }
+    }
+
+    async getUserProfile(req: Request, res: Response): Promise<Response> {
+        const userId = req.user!.userId;
+        if(!userId)
+        {
+            return res.status(400).json({
+                message: "Invalid token"
+            })
+        }
+
+        try {
+            const userProfile = await userService.getUserProfile(userId);
+            if(!userProfile)
+            {
+                return res.status(400).json("No such user");
+            }
+            return res.status(200).json({
+                message: "User profile fetched successfully",
+                data: userProfile
+            })
+        } catch (error) {
+            return res.status(500).json({
+                message: "Internal server error",
+                error: (error as Error).message
             })
         }
     }
@@ -51,8 +78,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                message: "Error in creating user",
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -79,7 +105,7 @@ class UserController{
         })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -92,7 +118,7 @@ class UserController{
             if(!token)
             {
                 return res.status(404).json({
-                    message: "could"
+                    message: "could not get token"
                 })
             }
             return res.status(200).json({
@@ -101,7 +127,7 @@ class UserController{
         })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             });
         }
     }
@@ -128,7 +154,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -154,7 +180,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -181,7 +207,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -207,7 +233,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -235,7 +261,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }
@@ -260,7 +286,7 @@ class UserController{
             })
         } catch (error) {
             return res.status(500).json({
-                error: error as Error
+                error: (error as Error).message
             })
         }
     }

@@ -22,6 +22,15 @@ class UserService {
         return getUser;
     }
 
+    async getUserProfile(id: string) {
+        const getUser = await userModel.findById(id).select("-Password");
+        return getUser;
+    }
+
+    async updateUserProfile(id: string) {
+       
+    }
+
     async createUser(data: createUserDTO) {
         const { username, email, Password, confirmPassword, role } = data;
         if (!username || !email || !Password || !confirmPassword) {

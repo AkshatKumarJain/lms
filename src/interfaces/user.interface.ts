@@ -6,6 +6,7 @@ export interface IUser{
     username: string;
     email: string;
     Password: string;
+    ProfilePhotoUrl: string;
     role: "student" | "teacher" | "admin";
     isAccountVerified: boolean;
     verifyOTP: string;

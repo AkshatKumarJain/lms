@@ -15,6 +15,7 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
 
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+  },
+  "include": ["src"]
 }

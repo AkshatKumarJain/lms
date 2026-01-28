@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get("/", userController.getAllUsers);
 router.get("/findByEmail", authMiddleware({required: true}), userController.getUserByEmail);
+router.get("/myProfile", authMiddleware({ required: true }), userController.getUserProfile);
 router.post("/register", userController.createUser);
 router.post("/login", userController.loginUser);
 router.delete("/delete", authorizeRole("admin"), userController.deleteUser);

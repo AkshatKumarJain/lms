@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema<IUser>(
             min: [6, "Password must be of atleast 6 characters."],
             max: [15, "Password cannot exceed 15 characters."]
         },
+        ProfilePhotoUrl: {
+            type: String,
+            default: ""
+        },
         role: {
             type: String,
             enum: ["student", "teacher", "admin"],
