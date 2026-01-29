@@ -23,7 +23,11 @@ const userSchema = new mongoose.Schema<IUser>(
         },
         ProfilePhotoUrl: {
             type: String,
-            default: ""
+            default: null
+        },
+        profilePhotoPublicId: {
+            type: String,
+            default: null
         },
         role: {
             type: String,

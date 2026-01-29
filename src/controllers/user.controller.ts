@@ -46,7 +46,7 @@ class UserController{
         if(!userId)
         {
             return res.status(400).json({
-                message: "Invalid token"
+                message: "Empty token"
             })
         }
 
@@ -66,6 +66,42 @@ class UserController{
                 error: (error as Error).message
             })
         }
+    }
+
+    async updateUserProfile(req: Request, res: Response): Promise<Response> {
+        const userId = req.user!.userId;
+        if(!userId)
+        {
+            return res.status(400).json({
+                message: "Empty token"
+            })
+        }
+
+        const username = req.body?.username;
+        const file = req?.file
+
+        
+        console.log("req.body:", req.body);
+        console.log("req.file:", req.file);
+        
+        if (!username && !req.file) {
+          return res.status(200).json({
+            message: "Nothing to update"
+          });
+        }
+
+        try {
+            const updateProfile = await userService.updateUserProfile({ userId, username, file });
+            return res.status(201).json({
+                message: "User Profile updated successfully",
+                data: updateProfile
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: (error as Error).message
+            })
+        }
+        
     }
 
     async createUser(req: Request, res: Response): Promise<Response>{

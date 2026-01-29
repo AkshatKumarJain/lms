@@ -1,4 +1,4 @@
-import { createUserDTO, IUser } from "../interfaces/user.interface";
+import { createUserDTO, IUpdateProfile, IUser } from "../interfaces/user.interface";
 import {userModel} from "../models/user.model";
 import transporter from "../config/nodemailer.config";
 import { issueTokens, revokeAll, rotateRefreshToken } from "redis-jwt-auth";
@@ -6,6 +6,7 @@ import crypto from "crypto"
 import { OAuth2Client } from "google-auth-library";
 import Student from "../models/student.model";
 import Teacher from "../models/teacher.model";
+import {uploadOnCloudinary} from "../config/cloudinary.config"
 
 class UserService {
     async getAllUsers() {
@@ -27,8 +28,50 @@ class UserService {
         return getUser;
     }
 
-    async updateUserProfile(id: string) {
-       
+    async updateUserProfile({userId, username, file}: IUpdateProfile) {
+        const updatedData: any = {};
+        if(username) updatedData.username = username;
+        
+        if(file)
+        {
+            const image = await this.uploadImage(file);
+            console.log("CLOUDINARY URL RECEIVED ", image.url);
+            updatedData.ProfilePhotoUrl = image.url;
+            updatedData.profilePhotoPublicId = image.publicId;
+        }
+
+        console.log("UPDATE OBJECT 👉", updatedData);
+
+
+        const updatedUserProfile = await userModel.findByIdAndUpdate(userId, 
+            {$set: updatedData},
+            {new: true}
+        );
+
+        if(!updatedUserProfile)
+        {
+            throw new Error("User not found");
+        }
+        return updatedUserProfile;
+    }
+
+    async uploadImage(file: Express.Multer.File) {
+        if(!file)
+        {
+            throw new Error("File not provided");
+        }
+        const localFilePath = file.path;
+        const cloudinaryResponse = await uploadOnCloudinary(localFilePath);
+
+        if(!cloudinaryResponse)
+        {
+            throw new Error("Cloudinary upload failed");
+        }
+
+        return {
+            url: cloudinaryResponse.secure_url,
+            publicId: cloudinaryResponse.public_id
+        }
     }
 
     async createUser(data: createUserDTO) {
@@ -272,6 +315,7 @@ class UserService {
 
         findUser.resetOTP = "";
         findUser.resetOTPExpiresAt = 0;
+        await findUser.save();
 
          await this.logoutUser(findUser._id.toString());
 

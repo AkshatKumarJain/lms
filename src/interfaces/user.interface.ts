@@ -7,6 +7,7 @@ export interface IUser{
     email: string;
     Password: string;
     ProfilePhotoUrl: string;
+    profilePhotoPublicId: string
     role: "student" | "teacher" | "admin";
     isAccountVerified: boolean;
     verifyOTP: string;
@@ -34,6 +35,12 @@ export interface createUserDTO{
     Password: string;
     confirmPassword: string,
     role?: "student" | "teacher" | "admin"
+}
+
+export interface IUpdateProfile{
+    userId: string,
+    username?: string,
+    file?: Express.Multer.File | undefined
 }
 
 export type UserDocument = HydratedDocument<IUser>;
