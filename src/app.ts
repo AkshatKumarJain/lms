@@ -2,6 +2,7 @@ import express from "express";
 import { connectDB } from "./db/connection";
 import userRouter from "./routes/user.route"
 import cors from "cors"
+import courseRouter from "./routes/course.route"
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(cors({
 connectDB();
 
 app.use("/api/v1", userRouter);
+app.use("/api/v1/course", courseRouter);
 
 app.get("/health", (_, res) => {
     res.send("api is running");

@@ -12,7 +12,7 @@ const courseSchema = new mongoose.Schema<ICourse>({
     },
     thumbnail: {
         type: String,
-        required: true
+        default: null
     },
     totalEnrolledStudends: {
         type: Number,
@@ -24,8 +24,7 @@ const courseSchema = new mongoose.Schema<ICourse>({
         default: []
     },
     author: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Teacher",
+        type: String,
         required: true
     },
     isPublished: {

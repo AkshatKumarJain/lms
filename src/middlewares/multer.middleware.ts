@@ -4,7 +4,6 @@ import fs from "fs";
 
 const uploadDir = path.join(process.cwd(), "public");
 
-// ensure folder exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }

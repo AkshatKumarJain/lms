@@ -14,8 +14,8 @@ router.post("/login", userController.loginUser);
 router.delete("/delete", /*authorizeRole("admin"),*/ userController.deleteUser);
 router.post("/logout", userController.logoutUser);
 router.post("/refresh", userController.rotateRefreshToken);
-router.post("/send-verify-otp", authMiddleware({required: true}), authorizeRole("student", "teacher"), userController.sendVerifyOTP);
-router.post("/verify-email", authMiddleware({required: true}), authorizeRole("student", "teacher"), userController.verifyEmail);
+router.post("/send-verify-otp", authMiddleware({required: true}), userController.sendVerifyOTP);
+router.post("/verify-email", authMiddleware({required: true}), userController.verifyEmail);
 router.post("/forgot-password", userController.forgotPassword);
 router.post("/reset-password/:token", userController.resetPassword);
 

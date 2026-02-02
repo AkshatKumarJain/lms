@@ -6,7 +6,7 @@ export interface ICourse{
     thumbnail: string,
     totalEnrolledStudends?: Number,
     enrolledStudents?: Array<mongoose.Types.ObjectId>,
-    author: mongoose.Types.ObjectId,
+    author: string,
     isPublished: boolean
 }
 
@@ -20,4 +20,11 @@ export interface ILesson{
     title?: string,
     section: mongoose.Types.ObjectId,
     order: number
+}
+
+export interface createCourseDTO {
+    author: string,
+    title: string,
+    description?: string,
+    thumbnail?: Express.Multer.File | undefined
 }

@@ -40,7 +40,7 @@ class UserService {
             updatedData.profilePhotoPublicId = image.publicId;
         }
 
-        console.log("UPDATE OBJECT 👉", updatedData);
+        console.log("updated object ", updatedData);
 
 
         const updatedUserProfile = await userModel.findByIdAndUpdate(userId, 
@@ -169,7 +169,7 @@ class UserService {
         if (!checkPassword) {
             throw new Error("email or password is incorrect.");
         }
-        const { accessToken, refreshToken } = await issueTokens({ userId: findUser._id.toString() });
+        const { accessToken, refreshToken } = await issueTokens({ userId: findUser._id.toString(), role: findUser.role });
         if (!accessToken || !refreshToken) {
             throw new Error("couldn't get tokens")
         }

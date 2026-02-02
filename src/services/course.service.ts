@@ -2,22 +2,48 @@ import mongoose from "mongoose";
 import courseModel from "../models/course.model";
 import { userModel } from "../models/user.model";
 import transporter from "../config/nodemailer.config";
+import userService from "./user.service";
+import { createCourseDTO, ICourse } from "../interfaces/course.interface";
+import Section from "../models/section.model";
 
 class Course{
-    async createCourse(title: string, description: string, thumbnail: string, author: string) {
+    async getAllCourses() {
+        const allCourses = await courseModel.find();
+        return allCourses;
+    }
+
+    async getCourseById(courseId: string) {
+        const courseById = await courseModel.findById(courseId);
+        return courseById;
+    }
+
+    async createCourse(data: createCourseDTO) {
+        const { author, title, description, thumbnail } = data;
+        const findUser = await userModel.findById(author);
+        console.log(findUser?.role);
+        if(findUser?.isAccountVerified===false)
+        {
+            throw new Error("Your account must be verified for publishing a course");
+        }
         const course = await courseModel.create({
-            title: title,
-            description: description,
-            thumbnail: thumbnail,
-            author: author
-        })
+            author: findUser?.username,
+            title,
+            description,
+        } as ICourse)
 
         if(!course)
         {
             throw new Error("Cannot create course");
         }
 
-        await this.sendCreateCourseMail(author, course._id.toString(), title);
+        // image handling for thumbnail
+        if(thumbnail)
+        {
+            const uploadThumbnail = await userService.uploadImage(thumbnail);
+            course.thumbnail = uploadThumbnail.url
+        }
+
+        //await this.sendCreateCourseMail(author, course._id.toString(), title);
 
         return course;
     }
@@ -45,6 +71,31 @@ class Course{
             console.log(mail);
         }
     }
+
+    // async createSection(title: string, courseId: string, order: number) {
+    //     const findCourse = await courseModel.findById(courseId);
+    //     if(!findCourse)
+    //     {
+    //         throw new Error("course with this id doesn't exists.");
+    //     }
+    //     const createSection = await Section.create({
+    //         title,
+    //         course: findCourse._id,
+    //         order
+    //     })
+    //     if(!createSection)
+    //     {
+    //         throw new Error("Couldn't create section");
+    //     }
+    // }
+
+    // async getSectionById() {
+
+    // }
+
+    // async publishCourse() {
+
+    // }
 }
 
 export = new Course;
