@@ -70,6 +70,93 @@ class CourseController{
             })
         }
     }
+
+    async getSectionById(req: Request, res: Response): Promise<Response> {
+        const {courseId, sectionId} = req.params;
+        if(!courseId)
+        {
+            return res.status(300).json({
+                message: "Course id is required"
+            })
+        }
+        if(!sectionId)
+        {
+            return res.status(300).json({
+                message: "Section id is required"
+            })
+        }
+        try {
+            const findSection = await courseService.getSectionById(sectionId, courseId);
+            return res.status(200).json({
+                message: "section fetched successfully",
+                data: findSection
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: (error as Error).message
+            })
+        }
+    }
+
+    async createSection(req: Request, res: Response): Promise<Response> {
+        const {title, order} = req.body;
+        const {courseId} = req.params;
+        if(!title) return res.status(300).json({ message: "title is required" });
+        if(!order) return res.status(300).json({ message: "order is required" });
+        if(!courseId) return res.status(300).json({ message: "course id is required" });
+
+        try {
+            const createdSection = await courseService.createSection(title, courseId, order);
+            return res.status(201).json({
+                message: "section created successfully"
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: (error as Error).message
+            })
+        }
+    }
+
+    async getLessonById(req: Request, res: Response): Promise<Response> {
+        const {lessonId} = req.params;
+        if(!lessonId)
+        {
+            return res.status(300).json({
+                message: "Lesson id is required"
+            })
+        }
+        try {
+            const findLesson = await courseService.getLessonById(lessonId);
+            return res.status(200).json({
+                message: "Lesson fetched successfully",
+                data: findLesson
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: (error as Error).message
+            })
+        }
+    }
+
+    async createLesson(req: Request, res: Response): Promise<Response> {
+        const {title, order} = req.body;
+        const {courseId} = req.params;
+        if(!title) return res.status(300).json({ message: "title is required" });
+        if(!order) return res.status(300).json({ message: "order is required" });
+        if(!courseId) return res.status(300).json({ message: "course id is required" });
+
+        try {
+            const createdLesson = await courseService.createLesson(title, courseId, order);
+            return res.status(201).json({
+                message: "Lesson created successfully"
+            })
+        } catch (error) {
+            return res.status(500).json({
+                error: (error as Error).message
+            })
+        }
+    }
+    
 }
 
 export = new CourseController;

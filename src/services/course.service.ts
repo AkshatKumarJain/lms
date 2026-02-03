@@ -5,6 +5,7 @@ import transporter from "../config/nodemailer.config";
 import userService from "./user.service";
 import { createCourseDTO, ICourse } from "../interfaces/course.interface";
 import Section from "../models/section.model";
+import Lesson from "../models/lesson.model";
 
 class Course{
     async getAllCourses() {
@@ -20,7 +21,7 @@ class Course{
     async createCourse(data: createCourseDTO) {
         const { author, title, description, thumbnail } = data;
         const findUser = await userModel.findById(author);
-        console.log(findUser?.role);
+        // console.log(findUser?.role);
         if(findUser?.isAccountVerified===false)
         {
             throw new Error("Your account must be verified for publishing a course");
@@ -48,6 +49,10 @@ class Course{
         return course;
     }
 
+    // async publishCourse() {
+
+    // }
+
     private async sendCreateCourseMail(author: string, courseId: string, title: string){
         const findAuthor = await userModel.findOne({author});
         if(!findAuthor)
@@ -72,30 +77,61 @@ class Course{
         }
     }
 
-    // async createSection(title: string, courseId: string, order: number) {
-    //     const findCourse = await courseModel.findById(courseId);
-    //     if(!findCourse)
-    //     {
-    //         throw new Error("course with this id doesn't exists.");
-    //     }
-    //     const createSection = await Section.create({
-    //         title,
-    //         course: findCourse._id,
-    //         order
-    //     })
-    //     if(!createSection)
-    //     {
-    //         throw new Error("Couldn't create section");
-    //     }
-    // }
 
-    // async getSectionById() {
+    async createSection(title: string, courseId: string, order: number) {
+        const findCourse = await courseModel.findById(courseId);
+        if(!findCourse)
+        {
+            throw new Error("course with this id doesn't exists.");
+        }
+        const createdSection = await Section.create({
+            title,
+            course: findCourse._id,
+            order
+        })
+        if(!createdSection)
+        {
+            throw new Error("Couldn't create section");
+        }
 
-    // }
+        return createdSection;
+    }
 
-    // async publishCourse() {
+    async getSectionById(id: string, courseId: string) {
+        const findCourse = await courseModel.findById(courseId);
+        if(!findCourse)
+        {
+            throw new Error("Invalid course id");
+        }
+        const findSectionById = await Section.findById(id);
+        return findSectionById;
+    }
 
-    // }
+    async createLesson(title: string, sectionId: string, order: number) {
+        const findSection = await Section.findById(sectionId);
+        if(!findSection)
+        {
+            throw new Error("section with this id does not exists.");
+        }
+        const createdLesson = await Lesson.create({
+            title,
+            section: findSection._id,
+            order
+        })
+
+        if(!createdLesson)
+        {
+            throw new Error("could not create lesson.");
+        }
+
+        return createdLesson;
+    }
+
+    async getLessonById(id: string) {
+        const findLessonById = await Lesson.findById(id);
+        return findLessonById;
+    }
+
 }
 
 export = new Course;
